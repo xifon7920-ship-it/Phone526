@@ -1,0 +1,79 @@
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local Window = OrionLib:MakeWindow({Name = "Phone7888 Hub (Lite)", HidePremium = false, SaveConfig = false})
+
+local Plr = game.Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+
+-- 1. เมนูหลัก (เคลื่อนที่ & บิน)
+local Tab1 = Window:MakeTab({Name = "หลัก", Icon = "rbxassetid://4483345998"})
+
+Tab1:AddSlider({
+	Name = "วิ่งเร็ว (WalkSpeed)", Min = 16, Max = 300, Default = 16,
+	Callback = function(v)
+		if Plr.Character and Plr.Character:FindFirstChild("Humanoid") then
+			Plr.Character.Humanoid.WalkSpeed = v
+		end
+	end
+})
+
+local Flying, FlySpeed = false, 50
+Tab1:AddToggle({
+	Name = "บินได้ (Fly)", Default = false,
+	Callback = function(v)
+		Flying = v
+		local char = Plr.Character
+		if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+		local hrp = char.HumanoidRootPart
+		
+		if Flying then
+			local bv = Instance.new("BodyVelocity", hrp)
+			bv.Name = "FlyVel"
+			bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+			task.spawn(function()
+				while Flying and hrp:FindFirstChild("FlyVel") do
+					bv.Velocity = Camera.CFrame.LookVector * FlySpeed
+					task.wait()
+				end
+				bv:Destroy()
+			end)
+		else
+			if hrp:FindFirstChild("FlyVel") then hrp.FlyVel:Destroy() end
+		end
+	end
+})
+
+Tab1:AddSlider({
+	Name = "ความเร็วบิน", Min = 10, Max = 200, Default = 50,
+	Callback = function(v) FlySpeed = v end
+})
+
+-- 2. เมนูมอง (ESP)
+local Tab2 = Window:MakeTab({Name = "มอง", Icon = "rbxassetid://4483345998"})
+
+Tab2:AddToggle({
+	Name = "มองโครงร่าง (Highlight ESP)", Default = false,
+	Callback = function(v)
+		for _, p in pairs(game.Players:GetPlayers()) do
+			if p ~= Plr and p.Character then
+				local hl = p.Character:FindFirstChild("ESP_HL")
+				if v and not hl then
+					hl = Instance.new("Highlight", p.Character)
+					hl.Name = "ESP_HL"
+					hl.FillColor = Color3.fromRGB(255, 0, 0)
+				elseif not v and hl then
+					hl:Destroy()
+				end
+			end
+		end
+	end
+})
+
+-- 3. ปิดสคริปต์
+local Tab3 = Window:MakeTab({Name = "ปิดสคริปต์", Icon = "rbxassetid://4483345998"})
+Tab3:AddButton({
+	Name = "Unload Hub",
+	Callback = function() OrionLib:Destroy() end
+})
+
+OrionLib:Init()
